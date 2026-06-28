@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reverb - Configure</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0d0d0d;color:#f0f0f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#181818;border-radius:16px;padding:36px 32px;max-width:460px;width:100%;text-align:center;box-shadow:0 8px 32px #0008}
+h1{font-size:1.6rem;margin-bottom:6px}
+.sub{color:#888;font-size:.9rem;margin-bottom:28px;line-height:1.5}
+.step{display:none}.step.on{display:block}
+.code{font-size:2.8rem;font-weight:800;letter-spacing:10px;color:#e44;font-family:monospace;margin:18px 0;padding:12px;background:#1e1e1e;border-radius:8px}
+.url{background:#111;padding:14px;border-radius:8px;word-break:break-all;font-family:monospace;font-size:.78rem;color:#4f4;margin:16px 0;text-align:left;border:1px solid #2a2a2a}
+.btn{background:#e44;color:#fff;border:none;padding:13px 24px;border-radius:8px;cursor:pointer;font-size:1rem;width:100%;margin-top:10px;font-weight:600;transition:.15s}
+.btn:hover{background:#c33}.btn:disabled{background:#444;cursor:default}
+.spin{display:inline-block;width:18px;height:18px;border:2px solid #555;border-top-color:#e44;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.wait{color:#888;font-size:.88rem;margin-top:14px}
+.note{color:#555;font-size:.8rem;margin-top:14px;line-height:1.4}
+a{color:#e44;text-decoration:none}a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div id="s0" class="step on">
+    <h1>Reverb</h1>
+    <p class="sub">AI-curated recommendations based on your Trakt history.</p>
+    <button class="btn" onclick="start()">Connect Trakt</button>
+    <p class="note">You will need a <a href="https://trakt.tv" target="_blank">trakt.tv</a> account.</p>
+  </div>
+
+  <div id="s1" class="step">
+    <h1>Authorize Trakt</h1>
+    <p class="sub">Open <a href="https://trakt.tv/activate" target="_blank">trakt.tv/activate</a> and enter this code:</p>
+    <div class="code" id="code"></div>
+    <p class="wait"><span class="spin"></span>Waiting for authorization...</p>
+    <p class="note">Expires in <span id="timer">--</span> seconds</p>
+  </div>
+
+  <div id="s2" class="step">
+    <h1>Ready</h1>
+    <p class="sub">Copy this link and install it in Nuvio or Stremio:<br><small>Addons → Add by URL</small></p>
+    <div class="url" id="url"></div>
+    <button class="btn" id="copyBtn">Copy Link</button>
+    <p class="note">Keep this link private. Anyone with it can access this recommendation profile.</p>
+  </div>
+
+</div>
+<script>
+let poll, countdown, deviceCode, exp;
+
+function show(n){document.querySelectorAll('.step').forEach(s=>s.classList.remove('on'));document.getElementById('s'+n).classList.add('on')}
+
+async function start(){
+  const r=await fetch('/configure/api/auth/start',{method:'POST'});
+  const d=await r.json();
+  deviceCode=d.device_code;
+  exp=Date.now()+d.expires_in*1000;
+  document.getElementById('code').textContent=d.user_code;
+  show(1);
+  countdown=setInterval(()=>{
+    const s=Math.max(0,Math.floor((exp-Date.now())/1000));
+    document.getElementById('timer').textContent=s;
+    if(s===0)clearInterval(countdown);
+  },1000);
+  poll=setInterval(doPoll,(d.interval||5)*1000);
+}
+
+async function doPoll(){
+  const r=await fetch('/configure/api/auth/poll',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_code:deviceCode})});
+  const d=await r.json();
+  if(d.success){
+    clearInterval(poll);clearInterval(countdown);
+    document.getElementById('url').textContent=d.manifestUrl;
+    show(2);
+  }
+}
+
+function copy(){
+  const btn=document.getElementById('copyBtn');
+  navigator.clipboard.writeText(document.getElementById('url').textContent);
+  btn.textContent='Copied';
+  setTimeout(()=>btn.textContent='Copy Link',2000);
+}
+document.getElementById('copyBtn').addEventListener('click',copy);
+</script>
+</body>
+</html>

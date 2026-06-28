@@ -1,0 +1,13 @@
+.git
+.github
+node_modules
+npm-debug.log*
+.env
+.env.*
+!.env.example
+data
+Sessions
+coverage
+*.md
+!README.md
+!LICENSE
