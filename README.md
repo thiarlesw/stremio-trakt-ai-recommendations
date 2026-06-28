@@ -2,7 +2,7 @@
 
 AI recommendations that echo your taste.
 
-Reverb does not provide streams. It builds personalized movie and series catalogs from your Trakt history, enriches candidates with TMDB metadata, optionally uses embeddings and an OpenAI-compatible LLM, and serves cached catalogs through the Stremio addon protocol.
+Reverb does not provide streams. It builds personalized movie and series catalogs from your Trakt history, enriches candidates with TMDB metadata, uses an OpenAI-compatible LLM for AI curation, optionally adds embeddings for semantic retrieval, and serves cached catalogs through the Stremio addon protocol.
 
 ## Status
 
@@ -22,8 +22,8 @@ Alpha. The core pipeline is usable, but the public setup experience is still int
 - Trakt OAuth application
 - TMDB API key
 - Turso/libSQL database
-- Optional OpenAI-compatible chat completions endpoint
-- Optional OpenAI-compatible embeddings endpoint
+- OpenAI-compatible chat completions endpoint for AI curation
+- Optional OpenAI-compatible embeddings endpoint for semantic retrieval
 
 ## Quick Start With Docker Compose
 
@@ -58,7 +58,7 @@ Open `http://localhost:3000/configure`.
 
 ## Configuration
 
-Required values:
+Required values for the full Reverb experience:
 
 | Variable | Description |
 | --- | --- |
@@ -67,15 +67,16 @@ Required values:
 | `TMDB_API_KEY` | TMDB API key |
 | `TURSO_URL` | libSQL/Turso database URL |
 | `TURSO_TOKEN` | libSQL/Turso auth token |
+| `AI_BASE_URL` | OpenAI-compatible chat completions base URL |
+| `AI_API_KEY` | API key for the chat completions provider |
+| `AI_MODEL` | Chat model name |
 | `ADDON_URL` | Public base URL of this addon |
 
 Optional values:
 
 | Variable | Description |
 | --- | --- |
-| `AI_BASE_URL` | OpenAI-compatible chat completions base URL |
-| `AI_API_KEY` | API key for the chat completions provider |
-| `AI_MODEL` | Chat model name |
+| `AI_CURATOR_TIMEOUT_MS` | AI curation timeout in milliseconds, defaults to `120000` |
 | `EMBED_BASE_URL` | OpenAI-compatible embeddings base URL |
 | `EMBED_API_KEY` | API key for the embeddings provider |
 | `EMBED_MODEL` | Embedding model name |
